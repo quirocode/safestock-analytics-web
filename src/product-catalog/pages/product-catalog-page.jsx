@@ -31,7 +31,7 @@ function Catalogo() {
     } catch (requestError) {
       const message =
         requestError.response?.data?.message ||
-        'No se pudo cargar el catalogo de productos.'
+        'No se pudo cargar el catálogo de productos.'
 
       setError(message)
     } finally {
@@ -40,7 +40,7 @@ function Catalogo() {
   }
 
   useEffect(() => {
-    productApi.list().then((response) => setProductos(response.data || [])).catch((requestError) => setError(requestError.response?.data?.message || 'No se pudo cargar el catalogo de productos.')).finally(() => setIsLoading(false))
+    productApi.list().then((response) => setProductos(response.data || [])).catch((requestError) => setError(requestError.response?.data?.message || 'No se pudo cargar el catálogo de productos.')).finally(() => setIsLoading(false))
   }, [])
 
   const productosFiltrados = useMemo(() => {
@@ -160,7 +160,7 @@ function Catalogo() {
 
     try {
       await productApi.remove(producto.id)
-      setSuccess('Producto eliminado del catalogo activo.')
+      setSuccess('Producto eliminado del catálogo activo.')
       await fetchProductos()
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'No se pudo eliminar el producto.')
@@ -187,10 +187,10 @@ function Catalogo() {
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            Catalogo de productos
+            Catálogo de productos
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Gestion de inventario conectada a PostgreSQL
+            Gestión de inventario conectada a PostgreSQL
           </p>
         </div>
 
@@ -286,7 +286,7 @@ function Catalogo() {
         <input
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           onChange={(event) => setBusqueda(event.target.value)}
-          placeholder="Buscar por nombre o codigo SKU..."
+          placeholder="Buscar por nombre o código SKU..."
           type="text"
           value={busqueda}
         />

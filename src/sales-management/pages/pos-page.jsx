@@ -242,7 +242,7 @@ function VentasPOS() {
             <div className="divide-y divide-gray-100">
               {carrito.length === 0 && (
                 <div className="px-4 py-10 text-center text-sm text-gray-500">
-                  El carrito esta vacio.
+                  El carrito está vacío.
                 </div>
               )}
 
