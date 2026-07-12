@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  button:not(:disabled) {
+    transition-property: color, background-color, border-color, box-shadow, filter, transform;
+    transition-duration: 160ms;
+  }
+
+  button:not(:disabled):hover {
+    filter: brightness(0.96);
+    box-shadow: 0 4px 10px rgb(15 23 42 / 0.12);
+  }
+}
