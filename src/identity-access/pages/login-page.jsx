@@ -38,6 +38,7 @@ function LoginPage() {
         {error&&<div className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
         <button className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60" disabled={loading}>{loading?'Validando...':challengeToken?'Verificar código':'Iniciar sesión'}</button>
       </form>
+      {!challengeToken && <p className="mt-6 text-center text-sm text-gray-600">¿No tienes una cuenta? <Link to="/registro" className="font-semibold text-blue-700 hover:text-blue-800">Regístrate aquí</Link></p>}
     </div></section>
     <aside className="hidden items-center bg-slate-900 p-14 text-white lg:flex"><div className="max-w-xl"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">DataNova Solutions</p><h2 className="mt-6 text-5xl font-bold leading-tight">Inventario confiable. Operaciones auditables.</h2><p className="mt-6 text-lg leading-8 text-slate-300">Detección temprana de riesgos, trazabilidad estricta y decisiones basadas en datos para MYPES.</p><div className="mt-10 grid grid-cols-3 gap-4">{['2FA seguro','Stock atómico','Auditoría real'].map(x=><div key={x} className="rounded-lg border border-slate-700 bg-slate-800 p-4 text-sm font-semibold">{x}</div>)}</div></div></aside>
   </main>
