@@ -24,6 +24,6 @@ export function SessionProvider({ children }) {
     } catch { logout(); return false } finally { setLoading(false) }
   }, [logout])
   useEffect(() => { const validate = async () => { await refresh() }; validate() }, [refresh])
-  const value = useMemo(() => ({ user, plan, loading, refresh, logout, setUser }), [user, plan, loading, refresh, logout])
+  const value = useMemo(() => ({ user, plan, loading, refresh, logout, setUser, setPlan }), [user, plan, loading, refresh, logout])
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
