@@ -1,16 +1,27 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import Notification from '../../shared/components/notification'
 import { useSession } from '../../identity-access/application/session-store'
 import { subscriptionApi } from '../application/subscription-api'
 
-const planFeatures = (plan) => [
-  plan.maxLocales ? `${plan.maxLocales} local${plan.maxLocales > 1 ? 'es' : ''}` : 'Locales ilimitados',
-  plan.maxUsuarios ? `Hasta ${plan.maxUsuarios} usuarios` : 'Usuarios ilimitados',
-  plan.antifraudeHabilitado ? 'Control antifraude' : 'Alertas visuales de stock',
-  plan.dashboardActividades ? 'Historial completo' : 'Operación esencial',
-  `Soporte ${String(plan.nivelSoporte || '').replaceAll('_', ' ').toLowerCase()}`,
-]
+const planFeatures = (plan) => {
+  if (plan.codigo === 'EMPRENDEDOR') {
+    return [
+      '1 local',
+      'Hasta 2 usuarios',
+      'Panel antifraude básico',
+      'Alertas visuales de stock',
+      'Soporte correo',
+    ]
+  }
 
+  return [
+    plan.maxLocales ? `${plan.maxLocales} local${plan.maxLocales > 1 ? 'es' : ''}` : 'Locales ilimitados',
+    plan.maxUsuarios ? `Hasta ${plan.maxUsuarios} usuarios` : 'Usuarios ilimitados',
+    plan.antifraudeHabilitado ? 'Control antifraude' : 'Alertas visuales de stock',
+    plan.dashboardActividades ? 'Historial completo' : 'Operación esencial',
+    `Soporte ${String(plan.nivelSoporte || '').replaceAll('_', ' ').toLowerCase()}`,
+  ]
+}
 function SubscriptionPage() {
   const { plan: activePlan, setPlan, refresh } = useSession()
   const [plans, setPlans] = useState([])
@@ -50,7 +61,7 @@ function SubscriptionPage() {
   return (
     <section>
       <Notification {...notice} />
-      <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">Suscripción SaaS</p>
+      <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">SuscripciÃ³n SaaS</p>
       <h1 className="mt-2 text-3xl font-bold text-gray-900">El plan adecuado para cada etapa</h1>
       <p className="mt-2 text-gray-500">
         Tu plan actual es <strong>{activePlan?.nombre || 'cargando...'}</strong>.
@@ -87,7 +98,7 @@ function SubscriptionPage() {
               <ul className="mt-6 flex-1 space-y-3 text-sm text-gray-600">
                 {planFeatures(plan).map((feature) => (
                   <li key={feature} className="flex gap-2">
-                    <span className="text-emerald-600">✓</span>
+                    <span className="text-emerald-600">âœ“</span>
                     {feature}
                   </li>
                 ))}
@@ -115,3 +126,4 @@ function SubscriptionPage() {
 }
 
 export default SubscriptionPage
+
