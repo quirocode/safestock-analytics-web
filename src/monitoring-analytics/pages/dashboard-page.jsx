@@ -1,21 +1,232 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { analyticsApi } from '../application/analytics-api'
 import { useSession } from '../../identity-access/application/session-store'
 
 const money = (value) => `S/ ${Number(value || 0).toFixed(2)}`
-function UpgradeModal({ feature, onClose }) { const navigate=useNavigate(); return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"><div className="w-full max-w-md rounded-lg bg-white p-7 shadow-2xl"><span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Función premium</span><h2 className="mt-4 text-2xl font-bold text-gray-900">Desbloquea {feature}</h2><p className="mt-3 text-sm leading-6 text-gray-600">Esta función está disponible desde el plan Crecimiento. Compara los planes para habilitar mayor trazabilidad y control antifraude.</p><div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="rounded-lg border px-4 py-2 font-semibold text-gray-700">Ahora no</button><button onClick={()=>navigate('/suscripcion')} className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white">Ver planes</button></div></div></div> }
+const isAdministrator = (user) => ['ADMIN', 'ADMINISTRADOR'].includes(String(user?.rol || '').toUpperCase())
 
-function DashboardPage(){
-  const { plan } = useSession()
-  const [summary,setSummary]=useState({}); const [series,setSeries]=useState([]); const [stock,setStock]=useState([]); const [events,setEvents]=useState([]); const [error,setError]=useState(''); const [upgrade,setUpgrade]=useState('')
-  const activityEnabled=Boolean(plan?.dashboardActividades); const fraudEnabled=Boolean(plan?.antifraudeHabilitado)
-  useEffect(()=>{if(!plan)return;const requests=[analyticsApi.summary(),analyticsApi.stockAlerts(),activityEnabled?analyticsApi.advanced():Promise.resolve({data:{series:[]}}),fraudEnabled?analyticsApi.suspiciousAlerts():Promise.resolve({data:[]})];Promise.all(requests).then(([s,l,a,e])=>{setSummary(s.data);setStock(l.data||[]);setSeries(a.data.series||[]);setEvents(e.data||[])}).catch(x=>setError(x.response?.data?.message||'No se pudo cargar el dashboard.'))},[plan,activityEnabled,fraudEnabled])
-  const cards=[['Ventas del día',money(summary.totalVentasHoy),'Acumulado operativo'],['Transacciones',summary.transaccionesHoy||0,'Abrir historial'],['Stock crítico',summary.productosBajoStock||0,'Atención requerida']]
-  return <section><div className="mb-8"><p className="text-xs font-semibold uppercase tracking-widest text-blue-600">Centro de control</p><h1 className="mt-2 text-3xl font-bold text-gray-900">Panorama operativo</h1><p className="mt-2 text-sm text-gray-500">Ventas, riesgo y comportamiento del inventario en tiempo real.</p></div>{error&&<div className="mb-5 rounded-lg bg-red-50 p-4 text-red-700">{error}</div>}<div className="grid gap-5 md:grid-cols-3">{cards.map((card,index)=>{const content=<article className="rounded-lg border border-gray-100 bg-white p-6 shadow-md transition hover:-translate-y-1 hover:shadow-lg"><div className="flex justify-between"><div><p className="text-sm font-medium text-gray-500">{card[0]}</p><p className="mt-3 text-3xl font-bold text-gray-900">{card[1]}</p><p className="mt-2 text-xs uppercase text-gray-400">{card[2]}</p></div><span className={`h-11 w-2 rounded-full ${index===0?'bg-blue-500':index===1?'bg-emerald-500':'bg-amber-500'}`}/></div></article>;return index===1?<Link key={card[0]} to="/ventas">{content}</Link>:<div key={card[0]}>{content}</div>})}</div>
-  <div className="mt-6 grid gap-6 xl:grid-cols-3"><article className="relative rounded-lg bg-white p-6 shadow-md xl:col-span-2"><div className="mb-5"><h2 className="font-semibold text-gray-900">Dashboard de actividades</h2><p className="text-sm text-gray-500">Tendencia de ventas de los últimos 30 días</p></div>{activityEnabled?<div className="h-72"><ResponsiveContainer width="100%" height="100%"><AreaChart data={series}><defs><linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.28}/><stop offset="95%" stopColor="#2563eb" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb"/><XAxis dataKey="fecha" tick={{fontSize:11}}/><YAxis tick={{fontSize:11}}/><Tooltip formatter={value=>money(value)}/><Area type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2} fill="url(#salesFill)"/></AreaChart></ResponsiveContainer></div>:<button onClick={()=>setUpgrade('el Dashboard de Actividades')} className="flex h-72 w-full flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-center"><span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Bloqueado</span><span className="mt-3 font-bold text-gray-800">Dashboard bloqueado</span><span className="mt-1 text-sm text-gray-500">Disponible desde el plan Crecimiento</span></button>}</article><article className="rounded-lg bg-white p-6 shadow-md"><h2 className="font-semibold">Alertas de stock</h2><div className="mt-4 space-y-3">{stock.slice(0,6).map(alert=><Link key={alert.sku} to={`/catalogo?search=${encodeURIComponent(alert.sku)}`} className="block rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><span className="font-bold">{alert.sku}</span><span className="block text-xs">{alert.nombre}: {alert.cantidad_restante} restantes</span></Link>)}{!stock.length&&<p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Inventario dentro de umbrales.</p>}</div></article></div>
-  <article className="mt-6 rounded-lg bg-white p-6 shadow-md"><div className="flex items-center justify-between"><div><h2 className="font-semibold">Panel antifraude</h2><p className="mt-1 text-sm text-gray-500">Operaciones sospechosas recientes</p></div>{!fraudEnabled&&<button onClick={()=>setUpgrade('el Panel Antifraude')} className="cursor-pointer rounded-lg bg-amber-100 px-4 py-2 text-sm font-bold text-amber-900 transition hover:bg-amber-200">Desbloquear</button>}</div>{fraudEnabled?<div className="mt-4 grid gap-3 md:grid-cols-2">{events.map(event=><div key={event.id} className={`rounded-lg border p-4 text-sm ${event.severidad==='CRITICA'?'border-red-200 bg-red-50 text-red-900':'border-amber-200 bg-amber-50 text-amber-900'}`}><p className="font-bold">{event.tipo}</p><p className="mt-1">{event.descripcion}</p><p className="mt-2 text-xs opacity-70">{new Date(event.fecha_hora).toLocaleString('es-PE')}</p></div>)}{!events.length&&<p className="text-sm text-gray-500">No se detectaron operaciones sospechosas recientes.</p>}</div>:<button onClick={()=>setUpgrade('el Panel Antifraude')} className="mt-4 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-sm font-semibold text-gray-600 transition hover:bg-gray-100">El motor antifraude no está incluido en tu plan actual.</button>}</article>{upgrade&&<UpgradeModal feature={upgrade} onClose={()=>setUpgrade('')}/>}</section>
+const riskStyles = {
+  Bajo: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  Medio: 'bg-amber-50 text-amber-800 border-amber-200',
+  Alto: 'bg-orange-50 text-orange-800 border-orange-200',
+  Crítico: 'bg-red-50 text-red-800 border-red-200',
 }
-export default DashboardPage
 
+function UpgradeModal({ feature, onClose }) {
+  const navigate = useNavigate()
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-7 shadow-2xl">
+        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Función premium</span>
+        <h2 className="mt-4 text-2xl font-bold text-gray-900">Desbloquea {feature}</h2>
+        <p className="mt-3 text-sm leading-6 text-gray-600">
+          Esta función depende del plan activo. Compara los planes para habilitar mayor trazabilidad y control.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button onClick={onClose} className="cursor-pointer rounded-lg border px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50">Ahora no</button>
+          <button onClick={() => navigate('/suscripcion')} className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700">Ver planes</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DashboardPage() {
+  const { user, plan } = useSession()
+  const [summary, setSummary] = useState({})
+  const [series, setSeries] = useState([])
+  const [stock, setStock] = useState([])
+  const [events, setEvents] = useState([])
+  const [employeeRisk, setEmployeeRisk] = useState([])
+  const [error, setError] = useState('')
+  const [upgrade, setUpgrade] = useState('')
+
+  const activityEnabled = Boolean(plan?.dashboardActividades)
+  const fraudEnabled = Boolean(plan?.antifraudeHabilitado)
+  const canSeeFraud = isAdministrator(user)
+
+  useEffect(() => {
+    if (!plan) return
+    const requests = [
+      analyticsApi.summary(),
+      analyticsApi.stockAlerts(),
+      activityEnabled ? analyticsApi.advanced() : Promise.resolve({ data: { series: [] } }),
+      canSeeFraud && fraudEnabled ? analyticsApi.suspiciousAlerts() : Promise.resolve({ data: [] }),
+      canSeeFraud && fraudEnabled ? analyticsApi.employeeRisk() : Promise.resolve({ data: [] }),
+    ]
+    Promise.all(requests)
+      .then(([summaryResponse, stockResponse, advancedResponse, eventsResponse, riskResponse]) => {
+        setSummary(summaryResponse.data)
+        setStock(stockResponse.data || [])
+        setSeries(advancedResponse.data.series || [])
+        setEvents(eventsResponse.data || [])
+        setEmployeeRisk(riskResponse.data || [])
+      })
+      .catch((err) => setError(err.response?.data?.message || 'No se pudo cargar el dashboard.'))
+  }, [plan, activityEnabled, fraudEnabled, canSeeFraud])
+
+  const cards = [
+    ['Ventas del día', money(summary.totalVentasHoy), 'Acumulado operativo'],
+    ['Transacciones', summary.transaccionesHoy || 0, 'Abrir historial'],
+    ['Stock crítico', summary.productosBajoStock || 0, 'Atención requerida'],
+  ]
+
+  return (
+    <section>
+      <div className="mb-8">
+        <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">Centro de control</p>
+        <h1 className="mt-2 text-3xl font-bold text-gray-900">Panorama operativo</h1>
+        <p className="mt-2 text-sm text-gray-500">Ventas, riesgo y comportamiento del inventario en tiempo real.</p>
+      </div>
+
+      {error && <div className="mb-5 rounded-lg bg-red-50 p-4 text-red-700">{error}</div>}
+
+      <div className="grid gap-5 md:grid-cols-3">
+        {cards.map((card, index) => {
+          const content = (
+            <article className="rounded-lg border border-gray-100 bg-white p-6 shadow-md transition hover:-translate-y-1 hover:shadow-lg">
+              <div className="flex justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">{card[0]}</p>
+                  <p className="mt-3 text-3xl font-bold text-gray-900">{card[1]}</p>
+                  <p className="mt-2 text-xs uppercase text-gray-400">{card[2]}</p>
+                </div>
+                <span className={`h-11 w-2 rounded-full ${index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              </div>
+            </article>
+          )
+          return index === 1 ? <Link key={card[0]} to="/ventas">{content}</Link> : <div key={card[0]}>{content}</div>
+        })}
+      </div>
+
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+        <article className="relative rounded-lg bg-white p-6 shadow-md xl:col-span-2">
+          <div className="mb-5">
+            <h2 className="font-semibold text-gray-900">Dashboard de actividades</h2>
+            <p className="text-sm text-gray-500">Tendencia de ventas de los últimos 30 días</p>
+          </div>
+          {activityEnabled ? (
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={series}>
+                  <defs>
+                    <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.28} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="fecha" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(value) => money(value)} />
+                  <Area type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2} fill="url(#salesFill)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <button onClick={() => setUpgrade('el Dashboard de Actividades')} className="flex h-72 w-full cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-center transition hover:bg-gray-100">
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Bloqueado</span>
+              <span className="mt-3 font-bold text-gray-800">Dashboard bloqueado</span>
+              <span className="mt-1 text-sm text-gray-500">Disponible desde el plan Crecimiento</span>
+            </button>
+          )}
+        </article>
+
+        <article className="rounded-lg bg-white p-6 shadow-md">
+          <h2 className="font-semibold">Alertas de stock</h2>
+          <div className="mt-4 space-y-3">
+            {stock.slice(0, 6).map((alert) => (
+              <Link key={alert.sku} to={`/catalogo?search=${encodeURIComponent(alert.sku)}`} className="block rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 transition hover:bg-amber-100">
+                <span className="font-bold">{alert.sku}</span>
+                <span className="block text-xs">{alert.nombre}: {alert.cantidad_restante} restantes</span>
+              </Link>
+            ))}
+            {!stock.length && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Inventario dentro de umbrales.</p>}
+          </div>
+        </article>
+      </div>
+
+      {canSeeFraud && (
+        <>
+          <article className="mt-6 rounded-lg bg-white p-6 shadow-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold">Panel antifraude</h2>
+                <p className="mt-1 text-sm text-gray-500">Patrones sospechosos recientes</p>
+              </div>
+              {!fraudEnabled && (
+                <button onClick={() => setUpgrade('el Panel Antifraude')} className="cursor-pointer rounded-lg bg-amber-100 px-4 py-2 text-sm font-bold text-amber-900 transition hover:bg-amber-200">Desbloquear</button>
+              )}
+            </div>
+            {fraudEnabled ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {events.map((event) => (
+                  <div key={event.id} className={`rounded-lg border p-4 text-sm ${event.severidad === 'CRITICA' || event.severidad === 'ALTA' ? 'border-red-200 bg-red-50 text-red-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-bold">{event.tipo}</p>
+                      <span className="rounded-full bg-white/70 px-2 py-1 text-xs font-semibold">{event.severidad}</span>
+                    </div>
+                    <p className="mt-1">{event.descripcion}</p>
+                    {event.usuario?.correo && <p className="mt-2 text-xs opacity-80">Usuario: {event.usuario.nombres} {event.usuario.apellidos} ({event.usuario.correo})</p>}
+                    <p className="mt-2 text-xs opacity-70">{new Date(event.fecha_hora).toLocaleString('es-PE')}</p>
+                  </div>
+                ))}
+                {!events.length && <p className="text-sm text-gray-500">No se detectaron patrones sospechosos recientes.</p>}
+              </div>
+            ) : (
+              <button onClick={() => setUpgrade('el Panel Antifraude')} className="mt-4 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-sm font-semibold text-gray-600 transition hover:bg-gray-100">
+                El motor antifraude no está incluido en tu plan actual.
+              </button>
+            )}
+          </article>
+
+          {fraudEnabled && (
+            <article className="mt-6 rounded-lg bg-white p-6 shadow-md">
+              <div className="mb-5">
+                <h2 className="font-semibold text-gray-900">Índice de riesgo por empleado</h2>
+                <p className="text-sm text-gray-500">Puntaje dinámico basado en anulaciones, ajustes, ventas repetidas y operaciones fuera de horario.</p>
+              </div>
+              <div className="overflow-hidden rounded-lg border border-gray-100">
+                <table className="min-w-full divide-y divide-gray-100">
+                  <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Empleado</th>
+                      <th className="px-4 py-3 text-left">Rol</th>
+                      <th className="px-4 py-3 text-left">Puntaje</th>
+                      <th className="px-4 py-3 text-left">Nivel</th>
+                      <th className="px-4 py-3 text-left">Indicadores</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white text-sm">
+                    {employeeRisk.map((risk) => (
+                      <tr key={risk.usuarioId}>
+                        <td className="px-4 py-3 font-semibold text-gray-900">{risk.nombre}</td>
+                        <td className="px-4 py-3 text-gray-600">{risk.rol}</td>
+                        <td className="px-4 py-3 font-bold text-gray-900">{risk.puntaje}/100</td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full border px-2 py-1 text-xs font-bold ${riskStyles[risk.nivel] || riskStyles.Bajo}`}>{risk.nivel}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500">
+                          Anulaciones: {risk.indicadores.anulacionesRepetidas} · Ajustes: {risk.indicadores.ajustesNegativos} · SKU repetido: {risk.indicadores.ventasRepetidasSku} · Fuera de horario: {risk.indicadores.fueraDeHorario}
+                        </td>
+                      </tr>
+                    ))}
+                    {!employeeRisk.length && (
+                      <tr><td className="px-4 py-5 text-sm text-gray-500" colSpan="5">No hay señales de riesgo para el rango evaluado.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          )}
+        </>
+      )}
+
+      {upgrade && <UpgradeModal feature={upgrade} onClose={() => setUpgrade('')} />}
+    </section>
+  )
+}
+
+export default DashboardPage

@@ -5,6 +5,7 @@ export const analyticsApi = {
   consolidated: (params) => api.get('/dashboard/analitico', { params }),
   stockAlerts: () => api.get('/alertas/stock'),
   suspiciousAlerts: () => api.get('/alertas/sospechosas'),
+  employeeRisk: (params) => api.get('/analytics/employee-risk', { params }),
   stockZeroAlerts: (params) => api.get('/alertas/stock-cero', { params }),
   exportSales: (params) => api.get('/reportes/ventas.csv', { params, responseType: 'blob' }),
 }
