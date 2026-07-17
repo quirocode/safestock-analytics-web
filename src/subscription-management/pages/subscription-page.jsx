@@ -61,7 +61,7 @@ function SubscriptionPage() {
   return (
     <section>
       <Notification {...notice} />
-      <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">SuscripciÃ³n SaaS</p>
+      <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">Suscripción SaaS</p>
       <h1 className="mt-2 text-3xl font-bold text-gray-900">El plan adecuado para cada etapa</h1>
       <p className="mt-2 text-gray-500">
         Tu plan actual es <strong>{activePlan?.nombre || 'cargando...'}</strong>.
@@ -98,7 +98,7 @@ function SubscriptionPage() {
               <ul className="mt-6 flex-1 space-y-3 text-sm text-gray-600">
                 {planFeatures(plan).map((feature) => (
                   <li key={feature} className="flex gap-2">
-                    <span className="text-emerald-600">âœ“</span>
+                    <span className="text-emerald-600">✓</span>
                     {feature}
                   </li>
                 ))}
